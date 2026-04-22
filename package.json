@@ -1,5 +1,5 @@
 {
-  "name": "node-hgt",
+  "name": "@glideandseek/node-hgt",
   "version": "1.2.3",
   "description": "Query hgt files (typically SRTM elevation data) with performance.",
   "homepage": "https://github.com/perliedman/node-hgt",
@@ -23,6 +23,9 @@
   "engines": {
     "node": ">=22"
   },
+  "files": [
+    "src"
+  ],
   "dependencies": {
     "extend": "^3.0.2",
     "lru-cache": "^11.3.5",
