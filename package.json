@@ -9,7 +9,7 @@
   },
   "main": "src/index.js",
   "scripts": {
-    "test": "tape ./test/*spec.js | tap-spec",
+    "test": "vitest run",
     "perf": "node ./test/perf-test.js"
   },
   "keywords": [
@@ -20,6 +20,9 @@
   ],
   "author": "Per Liedman <per@liedman.net>",
   "license": "ISC",
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "extend": "^3.0.2",
     "lru-cache": "^11.3.5",
@@ -27,7 +30,6 @@
     "yauzl": "^3.3.0"
   },
   "devDependencies": {
-    "tap-spec": "^5.0.0",
-    "tape": "^5.9.0"
+    "vitest": "^4.1.5"
   }
 }
