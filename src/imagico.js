@@ -3,7 +3,6 @@ var fs = require('fs'),
     path = require('path'),
     { Readable } = require('stream'),
     extend = require('extend'),
-    Promise = require('promise'),
     yauzl = require('yauzl'),
     _latLng = require('./latlng');
 
