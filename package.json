@@ -1,6 +1,6 @@
 {
   "name": "@glideandseek/node-hgt",
-  "version": "1.2.3",
+  "version": "2.0.0",
   "description": "Query hgt files (typically SRTM elevation data) with performance.",
   "homepage": "https://github.com/perliedman/node-hgt",
   "repository": {
