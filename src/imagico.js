@@ -1,9 +1,9 @@
 var fs = require('fs'),
     os = require('os'),
     path = require('path'),
+    { Readable } = require('stream'),
     extend = require('extend'),
     Promise = require('promise'),
-    request = require('request'),
     yauzl = require('yauzl'),
     _latLng = require('./latlng');
 
@@ -55,33 +55,37 @@ ImagicoElevationDownloader.prototype.download = function(tileKey, latLng, cb) {
 
 ImagicoElevationDownloader.prototype.search = function(latLng) {
     var ll = _latLng(latLng);
-    return new Promise(function(fulfill, reject) {
-        request('http://www.imagico.de/map/dem_json.php?date=&lon=' +
-            ll.lng + '&lat=' + ll.lat + '&lonE=' + ll.lng +
-            '&latE=' + ll.lat + '&vf=1', function(err, response, body) {
-                if (!err && response.statusCode === 200) {
-                    try {
-                        var data = JSON.parse(body);
-                        fulfill(data);
-                    } catch (e) {
-                        reject('Could not parse response from imagico: ' + body);
-                    }
-                } else {
-                    reject(err || response);
-                }
-            });
+    var url = 'http://www.imagico.de/map/dem_json.php?date=&lon=' +
+        ll.lng + '&lat=' + ll.lat + '&lonE=' + ll.lng +
+        '&latE=' + ll.lat + '&vf=1';
+    return fetch(url).then(function(response) {
+        if (!response.ok) {
+            throw response;
+        }
+        return response.text().then(function(body) {
+            try {
+                return JSON.parse(body);
+            } catch (e) {
+                throw 'Could not parse response from imagico: ' + body;
+            }
+        });
     });
 };
 
 ImagicoElevationDownloader.prototype._download = function(url, stream) {
-    return new Promise(function(fulfill, reject) {
-        request(url, function(err, response) {
-            if (!err && response.statusCode === 200) {
+    return fetch(url).then(function(response) {
+        if (!response.ok) {
+            throw response;
+        }
+        return new Promise(function(fulfill, reject) {
+            var body = Readable.fromWeb(response.body);
+            body.pipe(stream);
+            body.on('error', reject);
+            stream.on('finish', function() {
                 fulfill(stream);
-            } else {
-                reject(err || response);
-            }
-        }).pipe(stream);
+            });
+            stream.on('error', reject);
+        });
     });
 };
 
