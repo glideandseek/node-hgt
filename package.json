@@ -27,7 +27,6 @@
     "src"
   ],
   "dependencies": {
-    "extend": "^3.0.2",
     "lru-cache": "^11.3.5",
     "yauzl": "^3.3.0"
   },

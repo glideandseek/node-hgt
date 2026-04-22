@@ -1,5 +1,4 @@
 var fs = require('fs'),
-    extend = require('extend'),
     _latLng = require('./latlng');
 
 function Hgt(path, swLatLng, options) {
@@ -9,7 +8,7 @@ function Hgt(path, swLatLng, options) {
     try {
         stat = fs.fstatSync(fd);
 
-        this.options = extend({}, {
+        this.options = Object.assign({
             interpolation: Hgt.bilinear
         }, options);
 
