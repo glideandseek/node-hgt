@@ -1,12 +1,11 @@
-var extend = require('extend'),
-    { LRUCache } = require('lru-cache'),
+var { LRUCache } = require('lru-cache'),
     loadTile = require('./load-tile'),
     ImagicoElevationDownloader = require('./imagico'),
     _latLng = require('./latlng'),
     tileKey = require('./tile-key');
 
 function TileSet(tileDir, options) {
-    this.options = extend({}, {
+    this.options = Object.assign({
         loadTile: loadTile,
         downloader: new ImagicoElevationDownloader(tileDir)
     }, options);
