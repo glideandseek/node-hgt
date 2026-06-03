@@ -1,5 +1,5 @@
 var extend = require('extend'),
-    LRU = require('lru-cache'),
+    { LRUCache } = require('lru-cache'),
     loadTile = require('./load-tile'),
     ImagicoElevationDownloader = require('./imagico'),
     _latLng = require('./latlng'),
@@ -14,9 +14,9 @@ function TileSet(tileDir, options) {
         this.options.downloader = undefined;
     }
     this._tileDir = tileDir;
-    this._tileCache = LRU({
+    this._tileCache = new LRUCache({
         max: 1000,
-        dispose: function (key, n) {
+        dispose: function (n) {
             if(n) {
                 n.destroy();
             }
@@ -26,7 +26,7 @@ function TileSet(tileDir, options) {
 }
 
 TileSet.prototype.destroy = function() {
-    this._tileCache.reset();
+    this._tileCache.clear();
     delete this._tileCache;
 };
 
