@@ -1,9 +1,7 @@
 node-hgt
 ========
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/perliedman/node-hgt.svg)](https://greenkeeper.io/)
-
-[![npm version](https://img.shields.io/npm/v/node-hgt.svg)](https://www.npmjs.com/package/node-hgt) [![Build status](https://travis-ci.org/perliedman/node-hgt.svg?branch=master)](https://travis-ci.org/perliedman/node-hgt)
+[![npm version](https://img.shields.io/npm/v/@glideandseek/node-hgt.svg)](https://www.npmjs.com/package/@glideandseek/node-hgt)
 
 Read and query HGT files, for example from SRTM, for elevation data with high performance.
 Optionally, this module can also use cached and automatically download HGT files as required.
@@ -23,7 +21,7 @@ Load and query a HGT file:
 
 ```js
     var hgt = new Hgt(__dirname + '/data/N57E011.hgt', [57, 11]);
-    
+
     // Return elevation in meters above sea level.
     // By default, elevation is interpolated bilinearly.
     hgt.getElevation([57, 11])
