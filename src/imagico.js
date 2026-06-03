@@ -2,13 +2,11 @@ var fs = require('fs'),
     os = require('os'),
     path = require('path'),
     { Readable } = require('stream'),
-    extend = require('extend'),
-    Promise = require('promise'),
     yauzl = require('yauzl'),
     _latLng = require('./latlng');
 
 function ImagicoElevationDownloader(cacheDir, options) {
-    this.options = extend({}, options);
+    this.options = Object.assign({}, options);
     this._cacheDir = cacheDir;
     this._downloads = {};
 }

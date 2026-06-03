@@ -1,5 +1,4 @@
-var extend = require('extend'),
-    ImagicoElevationDownloader = require('./imagico'),
+var ImagicoElevationDownloader = require('./imagico'),
     loadTile = require('./load-tile'),
     _latLng = require('./latlng');
 
@@ -14,7 +13,7 @@ function flatten(a) {
 }
 
 function SyncTileSet(tileDir, sw, ne, cb, options) {
-    this.options = extend({}, {
+    this.options = Object.assign({
         loadTile: loadTile,
         downloader: new ImagicoElevationDownloader(tileDir),
         pad: 0
