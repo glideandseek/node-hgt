@@ -32,7 +32,7 @@ ImagicoElevationDownloader.prototype.download = function(tileKey, latLng, cb) {
 
                 tempPath = path.join(os.tmpdir(), randomUUID() + '-' + tileZips[0].name);
                 stream = fs.createWriteStream(tempPath);
-                return this._download(tileZips[0].link, stream);
+                return this._download(tileZips[0].link.replace('http://', 'https://'), stream);
             }.bind(this))
             .then(function() {
                 return this._unzip(tempPath, this._cacheDir);
@@ -54,7 +54,7 @@ ImagicoElevationDownloader.prototype.download = function(tileKey, latLng, cb) {
 
 ImagicoElevationDownloader.prototype.search = function(latLng) {
     var ll = _latLng(latLng);
-    var url = 'http://www.imagico.de/map/dem_json.php?date=&lon=' +
+    var url = 'https://www.imagico.de/map/dem_json.php?date=&lon=' +
         ll.lng + '&lat=' + ll.lat + '&lonE=' + ll.lng +
         '&latE=' + ll.lat + '&vf=1';
     return fetch(url).then(function(response) {

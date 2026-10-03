@@ -28,7 +28,7 @@ Load and query a HGT file:
 ```
 
 Use a cache directory of HGT files for querying. Missing data will be downloaded
-using the elevation data index from [imagico.de](http://www.imagico.de/map/demsearch.php),
+using the elevation data index from [imagico.de](https://www.imagico.de/map/demsearch.php),
 by default.
 
 ```js
