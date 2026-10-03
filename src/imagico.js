@@ -1,7 +1,8 @@
-var fs = require('fs'),
+var { randomUUID } = require('crypto'),
+    fs = require('fs'),
     os = require('os'),
     path = require('path'),
-    { Readable } = require('stream'),
+    { pipeline, Readable } = require('stream'),
     yauzl = require('yauzl'),
     _latLng = require('./latlng');
 
@@ -14,7 +15,7 @@ function ImagicoElevationDownloader(cacheDir, options) {
 ImagicoElevationDownloader.prototype.download = function(tileKey, latLng, cb) {
     var cleanup = function() {
             delete this._downloads[tileKey];
-            if (fs.existsSync(tempPath)) {
+            if (tempPath !== undefined && fs.existsSync(tempPath)) {
                 fs.unlinkSync(tempPath);
             }
         }.bind(this),
@@ -29,7 +30,7 @@ ImagicoElevationDownloader.prototype.download = function(tileKey, latLng, cb) {
                     throw new Error('No tiles found for latitude ' + latLng.lat + ', longitude ' + latLng.lng);
                 }
 
-                tempPath = path.join(os.tmpdir(), tileZips[0].name);
+                tempPath = path.join(os.tmpdir(), randomUUID() + '-' + tileZips[0].name);
                 stream = fs.createWriteStream(tempPath);
                 return this._download(tileZips[0].link, stream);
             }.bind(this))
@@ -76,54 +77,67 @@ ImagicoElevationDownloader.prototype._download = function(url, stream) {
             throw response;
         }
         return new Promise(function(fulfill, reject) {
-            var body = Readable.fromWeb(response.body);
-            body.pipe(stream);
-            body.on('error', reject);
-            stream.on('finish', function() {
+            pipeline(Readable.fromWeb(response.body), stream, function(err) {
+                if (err) {
+                    reject(err);
+                    return;
+                }
                 fulfill(stream);
             });
-            stream.on('error', reject);
         });
     });
 };
 
 ImagicoElevationDownloader.prototype._unzip = function(zipPath, targetPath) {
     return new Promise(function(fulfill, reject) {
-        var unzips = [];
-
-        yauzl.open(zipPath, function(err, zipfile) {
+        yauzl.open(zipPath, { lazyEntries: true }, function(err, zipfile) {
             if (err) {
                 reject(err);
                 return;
             }
+            var fail = function(err) {
+                zipfile.close();
+                reject(err);
+            };
             zipfile
             .on('entry', function(entry) {
-                if (/\/$/.test(entry.fileName)) {
+                if (!/\.hgt$/i.test(entry.fileName)) {
+                    zipfile.readEntry();
                     return;
                 }
                 zipfile.openReadStream(entry, function(err, readStream) {
                     var lastSlashIdx = entry.fileName.lastIndexOf('/'),
                         fileName = entry.fileName.substr(lastSlashIdx + 1),
-                        filePath = path.join(targetPath, fileName);
+                        filePath = path.join(targetPath, fileName),
+                        partPath = filePath + '.' + randomUUID(),
+                        removePartAndFail = function(err) {
+                            fs.rm(partPath, { force: true }, function() {
+                                fail(err);
+                            });
+                        };
                     if (err) {
-                        reject(err);
+                        fail(err);
                         return;
                     }
 
-                    unzips.push(new Promise(function(fulfill, reject) {
-                        readStream.on('end', fulfill);
-                        readStream.on('error', reject);
-                    }));
-                    readStream.pipe(fs.createWriteStream(filePath));
+                    pipeline(readStream, fs.createWriteStream(partPath), function(err) {
+                        if (err) {
+                            removePartAndFail(err);
+                            return;
+                        }
+                        fs.rename(partPath, filePath, function(err) {
+                            if (err) {
+                                removePartAndFail(err);
+                                return;
+                            }
+                            zipfile.readEntry();
+                        });
+                    });
                 });
-            });
-            zipfile.on('end', function() {
-                Promise.all(unzips)
-                    .then(function() {
-                        fulfill();
-                    })
-                    .catch(reject);
-            });
+            })
+            .on('error', reject)
+            .on('end', fulfill);
+            zipfile.readEntry();
         });
     });
 };
