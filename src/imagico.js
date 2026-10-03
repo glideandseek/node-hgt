@@ -77,13 +77,13 @@ ImagicoElevationDownloader.prototype._download = function(url, stream) {
             throw response;
         }
         return new Promise(function(fulfill, reject) {
-            var body = Readable.fromWeb(response.body);
-            body.pipe(stream);
-            body.on('error', reject);
-            stream.on('finish', function() {
+            pipeline(Readable.fromWeb(response.body), stream, function(err) {
+                if (err) {
+                    reject(err);
+                    return;
+                }
                 fulfill(stream);
             });
-            stream.on('error', reject);
         });
     });
 };
@@ -95,6 +95,10 @@ ImagicoElevationDownloader.prototype._unzip = function(zipPath, targetPath) {
                 reject(err);
                 return;
             }
+            var fail = function(err) {
+                zipfile.close();
+                reject(err);
+            };
             zipfile
             .on('entry', function(entry) {
                 if (!/\.hgt$/i.test(entry.fileName)) {
@@ -105,22 +109,25 @@ ImagicoElevationDownloader.prototype._unzip = function(zipPath, targetPath) {
                     var lastSlashIdx = entry.fileName.lastIndexOf('/'),
                         fileName = entry.fileName.substr(lastSlashIdx + 1),
                         filePath = path.join(targetPath, fileName),
-                        partPath = filePath + '.' + randomUUID();
+                        partPath = filePath + '.' + randomUUID(),
+                        removePartAndFail = function(err) {
+                            fs.rm(partPath, { force: true }, function() {
+                                fail(err);
+                            });
+                        };
                     if (err) {
-                        reject(err);
+                        fail(err);
                         return;
                     }
 
                     pipeline(readStream, fs.createWriteStream(partPath), function(err) {
                         if (err) {
-                            fs.rm(partPath, { force: true }, function() {
-                                reject(err);
-                            });
+                            removePartAndFail(err);
                             return;
                         }
                         fs.rename(partPath, filePath, function(err) {
                             if (err) {
-                                reject(err);
+                                removePartAndFail(err);
                                 return;
                             }
                             zipfile.readEntry();

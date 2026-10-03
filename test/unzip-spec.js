@@ -7,8 +7,13 @@ var fs = require('fs'),
 // block.zip: a folder with two tiles, a nested .zip and a .txt
 var TILE_SIZE = 1201 * 1201 * 2;
 
+var dirs = [];
+
 afterEach(function() {
     vi.restoreAllMocks();
+    dirs.splice(0).forEach(function(dir) {
+        fs.rmSync(dir, { recursive: true, force: true });
+    });
 });
 
 function slowDisk() {
@@ -30,7 +35,9 @@ function slowDisk() {
 }
 
 function tempDir() {
-    return fs.mkdtempSync(path.join(os.tmpdir(), 'node-hgt-unzip-'));
+    var dir = fs.mkdtempSync(path.join(os.tmpdir(), 'node-hgt-unzip-'));
+    dirs.push(dir);
+    return dir;
 }
 
 test('resolves only once every tile in the zip is completely written', function() {
@@ -51,7 +58,7 @@ test('extracts only .hgt files and leaves no temporary files', function() {
     });
 });
 
-test('rejects a truncated zip instead of crashing the process', function() {
+test('rejects a zip that cannot be opened', function() {
     var dir = tempDir();
     var truncated = path.join(dir, 'truncated.zip');
     var whole = fs.readFileSync(path.join(__dirname, 'data', 'block.zip'));
@@ -64,7 +71,10 @@ test('removes the partly written file when a tile in the zip is corrupt', functi
     var dir = tempDir();
     var corrupt = path.join(dir, 'corrupt.zip');
     var bytes = Buffer.from(fs.readFileSync(path.join(__dirname, 'data', 'block.zip')));
-    bytes.fill(0xff, 200, 400);
+    // The first occurrence of the name is in the tile's local header; its compressed data follows the name and extra field
+    var name = bytes.indexOf('M99/N10E010.hgt');
+    var dataStart = name + 'M99/N10E010.hgt'.length + bytes.readUInt16LE(name - 2);
+    bytes.fill(0xff, dataStart + 100, dataStart + 300);
     fs.writeFileSync(corrupt, bytes);
     var dler = new ImagicoElevationDownloader(dir);
     return expect(dler._unzip(corrupt, dir)).rejects.toBeDefined().then(function() {
